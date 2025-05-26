@@ -14,12 +14,8 @@ Zighash is a zero-dependency Zig package for generating fast, non-cryptographic 
   * **SpookyHash:** `spookyHash32`, `spookyHash64`
   * **xxHash:** `xxHash32`, `xxHash64`
   * **CityHash:** `cityHash32`, `cityHash64`
-* **Endian & Bit Utilities:**
-
-  * `toLittleEndian` for byte-slice to integer conversion
-  * `rotl32`/`rotl64`, `rotr32`/`rotr64` for bit rotations
-* **Pure Zig Implementation:** Zero dependencies, works at runtime and at comptime
-* **Comprehensive Testing:** Built-in `std.testing` suite ensures correctness
+* **Pure Zig Implementation:** Zero dependencies, works at runtime and at comptime.
+* **Comprehensive Testing:** Built-in `std.testing` suite ensures correctness.
 
 ## 🚀 Getting Started
 
@@ -75,10 +71,6 @@ pub fn main() void {
 ```
 
 ## 🔍 **API**
-
-Below is a detailed overview of each hashing function and utility provided by **zighash**:
-
----
 
 ### FNV-1a
 
@@ -176,21 +168,6 @@ pub fn cityHash64(data: []const u8) u64
 * **Ideal for:** Balancing speed and distribution across small and large inputs.
 
 ---
-
-### Utilities
-
-```zig
-fn toLittleEndian(IntT: type, bytes: []const u8) IntT
-```
-
-* **Description:** Converts a little-endian byte slice into an integer of type `IntT`.
-
-```zig
-fn rotl32(val: u32, rot: u5) u32
-fn rotl64(val: u64, rot: u6) u64
-fn rotr32(val: u32, rot: u5) u32
-fn rotr64(val: u64, rot: u6) u64
-```
 
 * **Description:** Perform bitwise left and right rotations on 32-bit and 64-bit values.
 
