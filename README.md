@@ -2,7 +2,7 @@
   <img src="/docs/logo.png" alt="zighash logo" width="75%"/>
 </p>
 
-Zighash is a Zig package for generating fast, non-cryptographic hash values using a variety of popular algorithms: **FNV-1a**, **MurmurHash3**, **Jenkins Lookup3**, **SpookyHash**, **xxHash**, and **CityHash**. Perfect for hash-based data structures, checksums, deduplication, and performance-sensitive applications.
+Zighash is a zero-dependency Zig package for generating fast, non-cryptographic hash values using a variety of popular algorithms: **FNV-1a**, **MurmurHash3**, **Jenkins Lookup3**, **SpookyHash**, **xxHash**, and **CityHash**. Perfect for hash-based data structures, checksums, deduplication, and performance-sensitive applications.
 
 ## ✨ **Features**
 
