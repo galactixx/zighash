@@ -10,6 +10,18 @@ fn toLittleEndian(comptime IntT: type, bytes: []const u8) IntT {
     return endian;
 }
 
+fn read2To16(buffer: []const u8, start: usize) u16 {
+    return std.mem.readInt(u16, @ptrCast(buffer[start .. start + 2]), .little);
+}
+
+fn read4To32(buffer: []const u8, start: usize) u32 {
+    return std.mem.readInt(u32, @ptrCast(buffer[start .. start + 4]), .little);
+}
+
+fn read8To64(buffer: []const u8, start: usize) u64 {
+    return std.mem.readInt(u64, @ptrCast(buffer[start .. start + 8]), .little);
+}
+
 fn rotl64(val: u64, rot: u6) u64 {
     return (val << rot) | (val >> (63 - rot + 1));
 }
@@ -40,6 +52,54 @@ pub fn fnv1aHash64(key: []const u8) u64 {
         fnv1aHash = 1099511628211 *% (fnv1aHash ^ key[i]);
     }
     return fnv1aHash;
+}
+
+pub fn superFastHash32(key: []const u8) u32 {
+    var hash: u32 = @truncate(key.len);
+    if (key.len == 0) {
+        return 0;
+    }
+
+    var bytesLeft: usize = key.len;
+    var i: usize = 0;
+    while (bytesLeft >= 4) : (bytesLeft -= 4) {
+        hash +%= read2To16(key, i);
+        var mix: u32 = @intCast(read2To16(key, i + 2));
+        mix = (mix << 11) ^ hash;
+        hash = (hash << 16) ^ mix;
+        hash +%= hash >> 11;
+        i += 4;
+    }
+
+    switch (bytesLeft) {
+        3 => {
+            hash +%= read2To16(key, i);
+            hash ^= hash << 16;
+
+            const signed: i8 = @intCast(key[i + 2]);
+            const unsigned: u32 = @intCast(signed);
+            hash ^= unsigned << 18;
+            hash +%= hash >> 11;
+        },
+        2 => {
+            hash +%= read2To16(key, i);
+            hash ^= hash << 11;
+            hash +%= hash >> 17;
+        },
+        1 => {
+            hash +%= key[i];
+            hash ^= hash << 10;
+            hash +%= hash >> 1;
+        },
+        else => {},
+    }
+    hash ^= hash << 3;
+    hash +%= hash >> 5;
+    hash ^= hash << 4;
+    hash +%= hash >> 17;
+    hash ^= hash << 25;
+    hash +%= hash >> 6;
+    return hash;
 }
 
 const sc: u64 = 0xdeadbeefdeadbeef;
@@ -644,14 +704,6 @@ fn fmix(a: u32) u32 {
     return x;
 }
 
-fn read4To32(buffer: []const u8, start: usize) u32 {
-    return std.mem.readInt(u32, @ptrCast(buffer[start .. start + 4]), .little);
-}
-
-fn read8To64(buffer: []const u8, start: usize) u64 {
-    return std.mem.readInt(u64, @ptrCast(buffer[start .. start + 8]), .little);
-}
-
 pub fn cityHash32(key: []const u8) u32 {
     if (key.len <= 4) {
         var b: u32 = 0;
@@ -1066,6 +1118,26 @@ test "32-bit hash equals" {
                 "AAAAAAAAAAAABBBBBBBB",
             .hash = 2577041638,
             .hasher = spookyHash32,
+        },
+        .{
+            .key = "The quick brown fox jumps over the lazy dog",
+            .hash = 96435427,
+            .hasher = superFastHash32,
+        },
+        .{
+            .key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnop",
+            .hash = 238131220,
+            .hasher = superFastHash32,
+        },
+        .{
+            .key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmno",
+            .hash = 1418846122,
+            .hasher = superFastHash32,
+        },
+        .{
+            .key = "xyz",
+            .hash = 3065802387,
+            .hasher = superFastHash32,
         },
     };
 

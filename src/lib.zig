@@ -9,3 +9,4 @@ pub const fnv1aHash32 = impl.fnv1aHash32;
 pub const fnv1aHash64 = impl.fnv1aHash64;
 pub const spookyHash32 = impl.spookyHash32;
 pub const spookyHash64 = impl.spookyHash64;
+pub const superFastHash32 = impl.superFastHash32;
