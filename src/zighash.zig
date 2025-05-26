@@ -373,74 +373,75 @@ fn spookyHash128(key: []const u8) struct { u64, u64 } {
 
         var bytesLeft: usize = key.len;
         var i: usize = 0;
+
         while (bytesLeft >= 96) : (bytesLeft -= 96) {
-            h0 +%= key[i];
+            h0 +%= read8To64(key, i);
             h2 ^= h10;
             h11 ^= h0;
             h0 = rotl64(h0, 11);
             h11 +%= h1;
 
-            h1 +%= key[i + 1];
+            h1 +%= read8To64(key, i + 8);
             h3 ^= h11;
             h0 ^= h1;
             h1 = rotl64(h1, 32);
             h0 +%= h2;
 
-            h2 +%= key[i + 2];
+            h2 +%= read8To64(key, i + 16);
             h4 ^= h0;
             h1 ^= h2;
             h2 = rotl64(h2, 43);
             h1 +%= h3;
 
-            h3 +%= key[i + 3];
+            h3 +%= read8To64(key, i + 24);
             h5 ^= h1;
             h2 ^= h3;
             h3 = rotl64(h3, 31);
             h2 +%= h4;
 
-            h4 +%= key[i + 4];
+            h4 +%= read8To64(key, i + 32);
             h6 ^= h2;
             h3 ^= h4;
             h4 = rotl64(h4, 17);
             h3 +%= h5;
 
-            h5 +%= key[i + 5];
+            h5 +%= read8To64(key, i + 40);
             h7 ^= h3;
             h4 ^= h5;
             h5 = rotl64(h5, 28);
             h4 +%= h6;
 
-            h6 +%= key[i + 6];
+            h6 +%= read8To64(key, i + 48);
             h8 ^= h4;
             h5 ^= h6;
             h6 = rotl64(h6, 39);
             h5 +%= h7;
 
-            h7 +%= key[i + 7];
+            h7 +%= read8To64(key, i + 56);
             h9 ^= h5;
             h6 ^= h7;
             h7 = rotl64(h7, 57);
             h6 +%= h8;
 
-            h8 +%= key[i + 8];
+            h8 +%= read8To64(key, i + 64);
             h10 ^= h6;
             h7 ^= h8;
             h8 = rotl64(h8, 55);
             h7 +%= h9;
 
-            h9 +%= key[i + 9];
+            h9 +%= read8To64(key, i + 72);
             h11 ^= h7;
             h8 ^= h9;
             h9 = rotl64(h9, 54);
             h8 +%= h10;
 
-            h10 +%= key[i + 10];
+            h10 +%= read8To64(key, i + 80);
             h0 ^= h8;
             h9 ^= h10;
             h10 = rotl64(h10, 22);
             h9 +%= h11;
 
-            h11 +%= key[i + 11];
+            h11 +%= read8To64(key, i + 88);
             h1 ^= h9;
             h10 ^= h11;
             h11 = rotl64(h11, 46);
@@ -453,18 +454,18 @@ fn spookyHash128(key: []const u8) struct { u64, u64 } {
         @memset(buf[bytesLeft..96], 0);
         buf[95] = @truncate(bytesLeft);
 
-        h0 +%= key[0];
-        h1 +%= key[1];
-        h2 +%= key[2];
-        h3 +%= key[3];
-        h4 +%= key[4];
-        h5 +%= key[5];
-        h6 +%= key[6];
-        h7 +%= key[7];
-        h8 +%= key[8];
-        h9 +%= key[9];
-        h10 +%= key[10];
-        h11 +%= key[11];
+        h0 +%= read8To64(buf[0..], 0);
+        h1 +%= read8To64(buf[0..], 8);
+        h2 +%= read8To64(buf[0..], 16);
+        h3 +%= read8To64(buf[0..], 24);
+        h4 +%= read8To64(buf[0..], 32);
+        h5 +%= read8To64(buf[0..], 40);
+        h6 +%= read8To64(buf[0..], 48);
+        h7 +%= read8To64(buf[0..], 56);
+        h8 +%= read8To64(buf[0..], 64);
+        h9 +%= read8To64(buf[0..], 72);
+        h10 +%= read8To64(buf[0..], 80);
+        h11 +%= read8To64(buf[0..], 88);
 
         endPartial(&h0, &h1, &h2, &h3, &h4, &h5, &h6, &h7, &h8, &h9, &h10, &h11);
         endPartial(&h0, &h1, &h2, &h3, &h4, &h5, &h6, &h7, &h8, &h9, &h10, &h11);
@@ -910,7 +911,6 @@ pub fn cityHash64(key: []const u8) u64 {
             const c: u32 = @intCast(key[key.len - 1]);
             const y: u32 = a +% (b << 8);
             const z: u32 = @truncate(key.len +% (c << 2));
-            std.debug.print("{any}\n", .{shiftMix(y *% k2 ^ z *% k0) *% k2});
             return shiftMix(y *% k2 ^ z *% k0) *% k2;
         } else {
             return k2;
@@ -1101,16 +1101,6 @@ test "32-bit hash equals" {
             .hasher = spookyHash32,
         },
         .{
-            .key = "",
-            .hash = 1811220761,
-            .hasher = spookyHash32,
-        },
-        .{
-            .key = "",
-            .hash = 1811220761,
-            .hasher = spookyHash32,
-        },
-        .{
             .key = "testinput",
             .hash = 842918276,
             .hasher = spookyHash32,
@@ -1139,8 +1129,16 @@ test "32-bit hash equals" {
             .key = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" ++
                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" ++
                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" ++
-                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                "AAAAAAAAAAAA",
             .hash = 1669341740,
+            .hasher = spookyHash32,
+        },
+        .{
+            .key = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" ++
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" ++
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" ++
+                "AAAAAAAAAAAABBBBBBBB",
+            .hash = 2577041638,
             .hasher = spookyHash32,
         },
     };
@@ -1211,6 +1209,70 @@ test "64-bit hash equals" {
             .key = "\xff\xee\xdd\xcc",
             .hash = 2883375492416478063,
             .hasher = cityHash64,
+        },
+        .{
+            .key = "",
+            .hash = 2533000996631939353,
+            .hasher = spookyHash64,
+        },
+        .{
+            .key = "ABC123",
+            .hash = 7422541954525714374,
+            .hasher = spookyHash64,
+        },
+        .{
+            .key = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXY1234567890ABCDE",
+            .hash = 14414801508010396549,
+            .hasher = spookyHash64,
+        },
+        .{
+            .key = "HELLOWORLDABCDEFGHIJKL1234567890MNOPQ",
+            .hash = 17083147413736147347,
+            .hasher = spookyHash64,
+        },
+        .{
+            .key = "XY",
+            .hash = 4350368303415703306,
+            .hasher = spookyHash64,
+        },
+        .{
+            .key = "ZigRustGo",
+            .hash = 5870813825580372420,
+            .hasher = spookyHash64,
+        },
+        .{
+            .key = "Test-Case-Input-For-SpookyHash-XYZ-12345",
+            .hash = 2793878970131685276,
+            .hasher = spookyHash64,
+        },
+        .{
+            .key = "Integration-Test-String-Example-1234",
+            .hash = 9418471063303507045,
+            .hasher = spookyHash64,
+        },
+        .{
+            .key = "ABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCDABCD",
+            .hash = 9463967066173872020,
+            .hasher = spookyHash64,
+        },
+        .{
+            .key = "PatternXPatternXPatternXPatternXPatternXPatternXPatternXPatternXP",
+            .hash = 12552504793583828975,
+            .hasher = spookyHash64,
+        },
+        .{
+            .key = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" ++
+                "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" ++
+                "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+            .hash = 7095554170450427737,
+            .hasher = spookyHash64,
+        },
+        .{
+            .key = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" ++
+                "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY" ++
+                "YYYYYYYYYYYYYYYYYYYZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+            .hash = 6224377824603928185,
+            .hasher = spookyHash64,
         },
     };
 
