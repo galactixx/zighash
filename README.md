@@ -2,7 +2,7 @@
   <img src="/docs/logo.png" alt="zighash logo" width="75%"/>
 </p>
 
-Zighash is a zero-dependency Zig package for generating fast, non-cryptographic hash values using a variety of popular algorithms: **FNV-1a**, **MurmurHash3**, **Jenkins Lookup3**, **SpookyHash**, **xxHash**, and **CityHash**. Perfect for hash-based data structures, checksums, deduplication, and performance-sensitive applications.
+Zighash is a zero-dependency Zig package for generating fast, non-cryptographic hash values using a variety of popular algorithms: **FNV-1a**, **MurmurHash3**, **SpookyHash**, **xxHash**, and **CityHash**. Perfect for hash-based data structures, checksums, deduplication, and performance-sensitive applications.
 
 ## ✨ **Features**
 
@@ -10,7 +10,6 @@ Zighash is a zero-dependency Zig package for generating fast, non-cryptographic 
 
   * **FNV-1a:** `fnv1aHash32`, `fnv1aHash64`
   * **MurmurHash3:** `murmur3Hash32`
-  * **Jenkins Lookup3:** `jenkinsLookup3`
   * **SpookyHash:** `spookyHash32`, `spookyHash64`
   * **xxHash:** `xxHash32`, `xxHash64`
   * **CityHash:** `cityHash32`, `cityHash64`
@@ -107,20 +106,6 @@ pub fn murmur3Hash32(data: []const u8) u32
   * `data`: The input byte slice.
 * **Returns:** A 32-bit unsigned integer (`u32`) computed by MurmurHash3.
 * **Ideal for:** General-purpose use with strong avalanche properties.
-
----
-
-### Jenkins Lookup3
-
-```zig
-pub fn jenkinsLookup3(data: []const u8) u32
-```
-
-* **Parameters:**
-
-  * `data`: The input byte slice.
-* **Returns:** A 32-bit unsigned integer (`u32`) from the Jenkins Lookup3 algorithm.
-* **Ideal for:** Small-to-medium keys with reliable distribution.
 
 ---
 

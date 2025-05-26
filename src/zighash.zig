@@ -42,75 +42,6 @@ pub fn fnv1aHash64(key: []const u8) u64 {
     return fnv1aHash;
 }
 
-fn jenkinsMix(a: *u32, b: *u32, c: *u32) void {
-    a.* -%= c.*;
-    a.* ^= rotl32(c.*, 4);
-    c.* +%= b.*;
-    b.* -%= a.*;
-    b.* ^= rotl32(a.*, 6);
-    a.* +%= c.*;
-    c.* -%= b.*;
-    c.* ^= rotl32(b.*, 8);
-    b.* +%= a.*;
-    a.* -%= c.*;
-    a.* ^= rotl32(c.*, 16);
-    c.* +%= b.*;
-    b.* -%= a.*;
-    b.* ^= rotl32(a.*, 19);
-    a.* +%= c.*;
-    c.* -%= b.*;
-    c.* ^= rotl32(b.*, 4);
-    b.* +%= a.*;
-}
-
-fn jenkinsFinal(a: *u32, b: *u32, c: *u32) void {
-    c.* ^= b.*;
-    c.* -%= rotl32(b.*, 14);
-    a.* ^= c.*;
-    a.* -%= rotl32(c.*, 11);
-    b.* ^= a.*;
-    b.* -%= rotl32(a.*, 25);
-    c.* ^= b.*;
-    c.* -%= rotl32(b.*, 16);
-    a.* ^= c.*;
-    a.* -%= rotl32(c.*, 4);
-    b.* ^= a.*;
-    b.* -%= rotl32(a.*, 14);
-    c.* ^= b.*;
-    c.* -%= rotl32(b.*, 24);
-}
-
-pub fn jenkinsLookup3(key: []const u8) u32 {
-    const seed: u32 = 0;
-    const length: u32 = @truncate(key.len);
-    var bytesLeft: usize = key.len;
-    var a: u32 = 0xdeadbeef +% (length << 2) +% seed;
-    var b: u32 = 0xdeadbeef +% (length << 2) +% seed;
-    var c: u32 = 0xdeadbeef +% (length << 2) +% seed;
-
-    var i: usize = 0;
-    while (bytesLeft > 3) : (bytesLeft -= 3) {
-        a +%= key[i];
-        b +%= key[i + 1];
-        c +%= key[i + 2];
-        jenkinsMix(&a, &b, &c);
-        i += 3;
-    }
-
-    switch (bytesLeft) {
-        3 => c +%= @intCast(key[i + 2]),
-        2 => c +%= @intCast(key[i + 1]),
-        1 => c +%= @intCast(key[i]),
-        else => {},
-    }
-
-    if (bytesLeft > 0) {
-        jenkinsFinal(&a, &b, &c);
-    }
-
-    return c;
-}
-
 const sc: u64 = 0xdeadbeefdeadbeef;
 
 fn shortPass(byte: u8, lsl: u6) u64 {
@@ -1069,11 +1000,6 @@ test "32-bit hash equals" {
             .key = "abcdefghijklmn",
             .hash = 2676528814,
             .hasher = cityHash32,
-        },
-        .{
-            .key = "",
-            .hash = 3735928559,
-            .hasher = jenkinsLookup3,
         },
         .{
             .key = "",
