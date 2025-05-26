@@ -42,6 +42,447 @@ pub fn fnv1aHash64(key: []const u8) u64 {
     return fnv1aHash;
 }
 
+fn jenkinsMix(a: *u32, b: *u32, c: *u32) void {
+    a.* -%= c.*;
+    a.* ^= rotl32(c.*, 4);
+    c.* +%= b.*;
+    b.* -%= a.*;
+    b.* ^= rotl32(a.*, 6);
+    a.* +%= c.*;
+    c.* -%= b.*;
+    c.* ^= rotl32(b.*, 8);
+    b.* +%= a.*;
+    a.* -%= c.*;
+    a.* ^= rotl32(c.*, 16);
+    c.* +%= b.*;
+    b.* -%= a.*;
+    b.* ^= rotl32(a.*, 19);
+    a.* +%= c.*;
+    c.* -%= b.*;
+    c.* ^= rotl32(b.*, 4);
+    b.* +%= a.*;
+}
+
+fn jenkinsFinal(a: *u32, b: *u32, c: *u32) void {
+    c.* ^= b.*;
+    c.* -%= rotl32(b.*, 14);
+    a.* ^= c.*;
+    a.* -%= rotl32(c.*, 11);
+    b.* ^= a.*;
+    b.* -%= rotl32(a.*, 25);
+    c.* ^= b.*;
+    c.* -%= rotl32(b.*, 16);
+    a.* ^= c.*;
+    a.* -%= rotl32(c.*, 4);
+    b.* ^= a.*;
+    b.* -%= rotl32(a.*, 14);
+    c.* ^= b.*;
+    c.* -%= rotl32(b.*, 24);
+}
+
+pub fn jenkinsLookup3(key: []const u8) u32 {
+    const seed: u32 = 0;
+    const length: u32 = @truncate(key.len);
+    var bytesLeft: usize = key.len;
+    var a: u32 = 0xdeadbeef +% (length << 2) +% seed;
+    var b: u32 = 0xdeadbeef +% (length << 2) +% seed;
+    var c: u32 = 0xdeadbeef +% (length << 2) +% seed;
+
+    var i: usize = 0;
+    while (bytesLeft > 3) : (bytesLeft -= 3) {
+        a +%= key[i];
+        b +%= key[i + 1];
+        c +%= key[i + 2];
+        jenkinsMix(&a, &b, &c);
+        i += 3;
+    }
+
+    switch (bytesLeft) {
+        3 => c +%= @intCast(key[i + 2]),
+        2 => c +%= @intCast(key[i + 1]),
+        1 => c +%= @intCast(key[i]),
+        else => {},
+    }
+
+    if (bytesLeft > 0) {
+        jenkinsFinal(&a, &b, &c);
+    }
+
+    return c;
+}
+
+const sc: u64 = 0xdeadbeefdeadbeef;
+
+fn shortPass(byte: u8, lsl: u6) u64 {
+    const byte64: u64 = @intCast(byte);
+    return byte64 << lsl;
+}
+
+fn shortMix(h0: *u64, h1: *u64, h2: *u64, h3: *u64) void {
+    h2.* = rotl64(h2.*, 50);
+    h2.* +%= h3.*;
+    h0.* ^= h2.*;
+    h3.* = rotl64(h3.*, 52);
+    h3.* +%= h0.*;
+    h1.* ^= h3.*;
+    h0.* = rotl64(h0.*, 30);
+    h0.* +%= h1.*;
+    h2.* ^= h0.*;
+    h1.* = rotl64(h1.*, 41);
+    h1.* +%= h2.*;
+    h3.* ^= h1.*;
+    h2.* = rotl64(h2.*, 54);
+    h2.* +%= h3.*;
+    h0.* ^= h2.*;
+    h3.* = rotl64(h3.*, 48);
+    h3.* +%= h0.*;
+    h1.* ^= h3.*;
+    h0.* = rotl64(h0.*, 38);
+    h0.* +%= h1.*;
+    h2.* ^= h0.*;
+    h1.* = rotl64(h1.*, 37);
+    h1.* +%= h2.*;
+    h3.* ^= h1.*;
+    h2.* = rotl64(h2.*, 62);
+    h2.* +%= h3.*;
+    h0.* ^= h2.*;
+    h3.* = rotl64(h3.*, 34);
+    h3.* +%= h0.*;
+    h1.* ^= h3.*;
+    h0.* = rotl64(h0.*, 5);
+    h0.* +%= h1.*;
+    h2.* ^= h0.*;
+    h1.* = rotl64(h1.*, 36);
+    h1.* +%= h2.*;
+    h3.* ^= h1.*;
+}
+
+fn shortEnd(h0: *u64, h1: *u64, h2: *u64, h3: *u64) void {
+    h3.* ^= h2.*;
+    h2.* = rotl64(h2.*, 15);
+    h3.* +%= h2.*;
+    h0.* ^= h3.*;
+    h3.* = rotl64(h3.*, 52);
+    h0.* +%= h3.*;
+    h1.* ^= h0.*;
+    h0.* = rotl64(h0.*, 26);
+    h1.* +%= h0.*;
+    h2.* ^= h1.*;
+    h1.* = rotl64(h1.*, 51);
+    h2.* +%= h1.*;
+    h3.* ^= h2.*;
+    h2.* = rotl64(h2.*, 28);
+    h3.* +%= h2.*;
+    h0.* ^= h3.*;
+    h3.* = rotl64(h3.*, 9);
+    h0.* +%= h3.*;
+    h1.* ^= h0.*;
+    h0.* = rotl64(h0.*, 47);
+    h1.* +%= h0.*;
+    h2.* ^= h1.*;
+    h1.* = rotl64(h1.*, 54);
+    h2.* +%= h1.*;
+    h3.* ^= h2.*;
+    h2.* = rotl64(h2.*, 32);
+    h3.* +%= h2.*;
+    h0.* ^= h3.*;
+    h3.* = rotl64(h3.*, 25);
+    h0.* +%= h3.*;
+    h1.* ^= h0.*;
+    h0.* = rotl64(h0.*, 63);
+    h1.* +%= h0.*;
+}
+
+fn shortReturn(h0: u64, h1: u64, h2: u64, h3: u64) struct { u64, u64 } {
+    var a: u64 = h0;
+    var b: u64 = h1;
+    var c: u64 = h2;
+    var d: u64 = h3;
+    shortEnd(&a, &b, &c, &d);
+    return .{ a, b };
+}
+
+fn endPartial(
+    h0: *u64,
+    h1: *u64,
+    h2: *u64,
+    h3: *u64,
+    h4: *u64,
+    h5: *u64,
+    h6: *u64,
+    h7: *u64,
+    h8: *u64,
+    h9: *u64,
+    h10: *u64,
+    h11: *u64,
+) void {
+    h11.* +%= h1.*;
+    h2.* ^= h11.*;
+    h1.* = rotl64(h1.*, 44);
+
+    h0.* +%= h2.*;
+    h3.* ^= h0.*;
+    h2.* = rotl64(h2.*, 15);
+
+    h1.* +%= h3.*;
+    h4.* ^= h1.*;
+    h3.* = rotl64(h3.*, 34);
+
+    h2.* +%= h4.*;
+    h5.* ^= h2.*;
+    h4.* = rotl64(h4.*, 21);
+
+    h3.* +%= h5.*;
+    h6.* ^= h3.*;
+    h5.* = rotl64(h5.*, 38);
+
+    h4.* +%= h6.*;
+    h7.* ^= h4.*;
+    h6.* = rotl64(h6.*, 33);
+
+    h5.* +%= h7.*;
+    h8.* ^= h5.*;
+    h7.* = rotl64(h7.*, 10);
+
+    h6.* +%= h8.*;
+    h9.* ^= h6.*;
+    h8.* = rotl64(h8.*, 13);
+
+    h7.* +%= h9.*;
+    h10.* ^= h7.*;
+    h9.* = rotl64(h9.*, 38);
+
+    h8.* +%= h10.*;
+    h11.* ^= h8.*;
+    h10.* = rotl64(h10.*, 53);
+
+    h9.* +%= h11.*;
+    h0.* ^= h9.*;
+    h11.* = rotl64(h11.*, 42);
+
+    h10.* +%= h0.*;
+    h1.* ^= h10.*;
+    h0.* = rotl64(h0.*, 54);
+}
+
+fn spookyHash128(key: []const u8) struct { u64, u64 } {
+    const seed: u32 = 0;
+    if (key.len < 192) {
+        var a: u64 = 0;
+        var b: u64 = 0;
+        var c: u64 = sc;
+        var d: u64 = sc;
+
+        var i: usize = 0;
+        var bytesLeft: usize = key.len;
+        if (key.len > 15) {
+            while (bytesLeft >= 32) : (bytesLeft -= 32) {
+                c +%= read8To64(key, i);
+                d +%= read8To64(key, i + 8);
+                shortMix(&a, &b, &c, &d);
+                a +%= read8To64(key, i + 16);
+                b +%= read8To64(key, i + 24);
+                i += 32;
+            }
+
+            if (bytesLeft >= 16) {
+                c +%= read8To64(key, i);
+                d +%= read8To64(key, i + 8);
+                shortMix(&a, &b, &c, &d);
+                bytesLeft -= 16;
+                i += 16;
+            }
+        }
+
+        const length: u64 = @truncate(key.len);
+        d +%= (length << 56);
+
+        // first four bytes
+        if (bytesLeft >= 15) {
+            d +%= shortPass(key[i + 14], 48);
+        }
+        if (bytesLeft >= 14) {
+            d +%= shortPass(key[i + 13], 40);
+        }
+        if (bytesLeft >= 13) {
+            d +%= shortPass(key[i + 12], 32);
+        }
+        if (bytesLeft >= 12) {
+            d +%= read4To32(key, i + 8);
+            c +%= read8To64(key, i);
+            return shortReturn(a, b, c, d);
+        }
+
+        // second four bytes
+        if (bytesLeft >= 11) {
+            d +%= shortPass(key[i + 10], 16);
+        }
+        if (bytesLeft >= 10) {
+            d +%= shortPass(key[i + 9], 8);
+        }
+        if (bytesLeft >= 9) {
+            d +%= key[i + 8];
+        }
+        if (bytesLeft >= 8) {
+            c +%= read8To64(key, i);
+            return shortReturn(a, b, c, d);
+        }
+
+        // third four bytes
+        if (bytesLeft >= 7) {
+            c +%= shortPass(key[i + 6], 48);
+        }
+        if (bytesLeft >= 6) {
+            c +%= shortPass(key[i + 5], 40);
+        }
+        if (bytesLeft >= 5) {
+            c +%= shortPass(key[i + 4], 32);
+        }
+        if (bytesLeft >= 4) {
+            c +%= read4To32(key, i);
+            return shortReturn(a, b, c, d);
+        }
+
+        // last four bytes
+        if (bytesLeft >= 3) {
+            c +%= shortPass(key[i + 2], 16);
+        }
+        if (bytesLeft >= 2) {
+            c +%= shortPass(key[i + 1], 8);
+        }
+        if (bytesLeft >= 1) {
+            c +%= key[i];
+            return shortReturn(a, b, c, d);
+        }
+        c +%= sc;
+        d +%= sc;
+        return shortReturn(a, b, c, d);
+    } else {
+        var h0: u64 = @intCast(seed);
+        var h1: u64 = @intCast(seed);
+        var h2: u64 = sc;
+        var h3: u64 = @intCast(seed);
+        var h4: u64 = @intCast(seed);
+        var h5: u64 = sc;
+        var h6: u64 = @intCast(seed);
+        var h7: u64 = @intCast(seed);
+        var h8: u64 = sc;
+        var h9: u64 = @intCast(seed);
+        var h10: u64 = @intCast(seed);
+        var h11: u64 = sc;
+
+        var bytesLeft: usize = key.len;
+        var i: usize = 0;
+        while (bytesLeft >= 96) : (bytesLeft -= 96) {
+            h0 +%= key[i];
+            h2 ^= h10;
+            h11 ^= h0;
+            h0 = rotl64(h0, 11);
+            h11 +%= h1;
+
+            h1 +%= key[i + 1];
+            h3 ^= h11;
+            h0 ^= h1;
+            h1 = rotl64(h1, 32);
+            h0 +%= h2;
+
+            h2 +%= key[i + 2];
+            h4 ^= h0;
+            h1 ^= h2;
+            h2 = rotl64(h2, 43);
+            h1 +%= h3;
+
+            h3 +%= key[i + 3];
+            h5 ^= h1;
+            h2 ^= h3;
+            h3 = rotl64(h3, 31);
+            h2 +%= h4;
+
+            h4 +%= key[i + 4];
+            h6 ^= h2;
+            h3 ^= h4;
+            h4 = rotl64(h4, 17);
+            h3 +%= h5;
+
+            h5 +%= key[i + 5];
+            h7 ^= h3;
+            h4 ^= h5;
+            h5 = rotl64(h5, 28);
+            h4 +%= h6;
+
+            h6 +%= key[i + 6];
+            h8 ^= h4;
+            h5 ^= h6;
+            h6 = rotl64(h6, 39);
+            h5 +%= h7;
+
+            h7 +%= key[i + 7];
+            h9 ^= h5;
+            h6 ^= h7;
+            h7 = rotl64(h7, 57);
+            h6 +%= h8;
+
+            h8 +%= key[i + 8];
+            h10 ^= h6;
+            h7 ^= h8;
+            h8 = rotl64(h8, 55);
+            h7 +%= h9;
+
+            h9 +%= key[i + 9];
+            h11 ^= h7;
+            h8 ^= h9;
+            h9 = rotl64(h9, 54);
+            h8 +%= h10;
+
+            h10 +%= key[i + 10];
+            h0 ^= h8;
+            h9 ^= h10;
+            h10 = rotl64(h10, 22);
+            h9 +%= h11;
+
+            h11 +%= key[i + 11];
+            h1 ^= h9;
+            h10 ^= h11;
+            h11 = rotl64(h11, 46);
+            h10 +%= h0;
+            i += 96;
+        }
+
+        var buf: [96]u8 = undefined;
+        @memcpy(buf[0..bytesLeft], key[i..]);
+        @memset(buf[bytesLeft..96], 0);
+        buf[95] = @truncate(bytesLeft);
+
+        h0 +%= key[0];
+        h1 +%= key[1];
+        h2 +%= key[2];
+        h3 +%= key[3];
+        h4 +%= key[4];
+        h5 +%= key[5];
+        h6 +%= key[6];
+        h7 +%= key[7];
+        h8 +%= key[8];
+        h9 +%= key[9];
+        h10 +%= key[10];
+        h11 +%= key[11];
+
+        endPartial(&h0, &h1, &h2, &h3, &h4, &h5, &h6, &h7, &h8, &h9, &h10, &h11);
+        endPartial(&h0, &h1, &h2, &h3, &h4, &h5, &h6, &h7, &h8, &h9, &h10, &h11);
+        endPartial(&h0, &h1, &h2, &h3, &h4, &h5, &h6, &h7, &h8, &h9, &h10, &h11);
+        return .{ h0, h1 };
+    }
+}
+
+pub fn spookyHash64(key: []const u8) u64 {
+    const hash1, _ = spookyHash128(key);
+    return @truncate(hash1);
+}
+
+pub fn spookyHash32(key: []const u8) u32 {
+    const hash1, _ = spookyHash128(key);
+    return @truncate(hash1);
+}
+
 const murc1: u32 = 0xCC9E2D51;
 const murc2: u32 = 0x1B873593;
 
@@ -68,7 +509,7 @@ pub fn murmur3Hash32(key: []const u8) u32 {
         h ^= j;
     }
 
-    h ^= @intCast(key.len);
+    h ^= @truncate(key.len);
     h ^= h >> 16;
     h *%= 0x85ebca6b;
     h ^= h >> 13;
@@ -147,7 +588,7 @@ pub fn xxHash64(key: []const u8) u64 {
         h +%= seed +% xx64p5;
     }
 
-    h +%= @intCast(key.len);
+    h +%= @truncate(key.len);
     if (bytesLeft > 0) {
         var start: usize = key.len - bytesLeft;
 
@@ -221,7 +662,7 @@ pub fn xxHash32(key: []const u8) u32 {
         h +%= seed +% xx32p5;
     }
 
-    h +%= @intCast(key.len);
+    h +%= @truncate(key.len);
     if (bytesLeft > 0) {
         var start: usize = key.len - bytesLeft;
 
@@ -290,11 +731,11 @@ pub fn cityHash32(key: []const u8) u32 {
             c ^= b;
         }
 
-        const mur1 = mur(@intCast(key.len), c);
+        const mur1 = mur(@truncate(key.len), c);
         const mur2 = mur(b, mur1);
         return fmix(mur2);
     } else if (key.len <= 12) {
-        var a: u32 = @intCast(key.len);
+        var a: u32 = @truncate(key.len);
         var b: u32 = a *% 5;
         var c: u32 = 9;
         const d: u32 = b;
@@ -314,7 +755,7 @@ pub fn cityHash32(key: []const u8) u32 {
         const d: u32 = read4To32(key, key.len >> 1);
         const e: u32 = read4To32(key, 0);
         const f: u32 = read4To32(key, key.len - 4);
-        const g: u32 = @intCast(key.len);
+        const g: u32 = @truncate(key.len);
 
         const mur1: u32 = mur(a, g);
         const mur2: u32 = mur(b, mur1);
@@ -324,23 +765,23 @@ pub fn cityHash32(key: []const u8) u32 {
         const mur6: u32 = mur(f, mur5);
         return fmix(mur6);
     } else {
-        var h: u32 = @intCast(key.len);
+        var h: u32 = @truncate(key.len);
         var g: u32 = cityc1 *% h;
         var f: u32 = g;
 
         var a1: u32 = read4To32(key, key.len - 4);
         a1 = rotr32(a1 *% cityc1, 17) *% cityc2;
 
-        var a2: u32 = read4To32(key, @intCast(key.len - 8));
+        var a2: u32 = read4To32(key, @truncate(key.len - 8));
         a2 = rotr32(a2 *% cityc1, 17) *% cityc2;
 
-        var a3: u32 = read4To32(key, @intCast(key.len - 16));
+        var a3: u32 = read4To32(key, @truncate(key.len - 16));
         a3 = rotr32(a3 *% cityc1, 17) *% cityc2;
 
-        var a4: u32 = read4To32(key, @intCast(key.len - 12));
+        var a4: u32 = read4To32(key, @truncate(key.len - 12));
         a4 = rotr32(a4 *% cityc1, 17) *% cityc2;
 
-        var a5: u32 = read4To32(key, @intCast(key.len - 20));
+        var a5: u32 = read4To32(key, @truncate(key.len - 20));
         a5 = rotr32(a5 *% cityc1, 17) *% cityc2;
 
         h ^= a1;
@@ -468,7 +909,7 @@ pub fn cityHash64(key: []const u8) u64 {
             const b: u32 = @intCast(key[key.len >> 1]);
             const c: u32 = @intCast(key[key.len - 1]);
             const y: u32 = a +% (b << 8);
-            const z: u32 = @intCast(key.len +% (c << 2));
+            const z: u32 = @truncate(key.len +% (c << 2));
             std.debug.print("{any}\n", .{shiftMix(y *% k2 ^ z *% k0) *% k2});
             return shiftMix(y *% k2 ^ z *% k0) *% k2;
         } else {
@@ -505,8 +946,14 @@ pub fn cityHash64(key: []const u8) u64 {
         return b +% x;
     } else {
         var x: u64 = read8To64(key, key.len - 40);
-        var y: u64 = read8To64(key, key.len - 16) +% read8To64(key, key.len - 56);
-        var z: u64 = hashLen16From128(read8To64(key, key.len - 48) +% key.len, read8To64(key, key.len - 24));
+        var y: u64 = read8To64(key, key.len - 16) +% read8To64(
+            key,
+            key.len - 56,
+        );
+        var z: u64 = hashLen16From128(
+            read8To64(key, key.len - 48) +% key.len,
+            read8To64(key, key.len - 24),
+        );
 
         var vWeakHash = weakHashLen32(key[key.len - 64 ..], key.len, z);
         var v1: u64 = vWeakHash[0];
@@ -530,11 +977,15 @@ pub fn cityHash64(key: []const u8) u64 {
             v1 = vWeakHash[0];
             v2 = vWeakHash[1];
 
-            wWeakHash = weakHashLen32(key[i + 32..], z +% w2, y +% read8To64(key, i + 16));
+            wWeakHash = weakHashLen32(
+                key[i + 32 ..],
+                z +% w2,
+                y +% read8To64(key, i + 16),
+            );
             w1 = wWeakHash[0];
             w2 = wWeakHash[1];
             std.mem.swap(u64, &z, &x);
-            
+
             i += 64;
         }
         const fh = hashLen16From128(v1, w1);
@@ -595,7 +1046,7 @@ test "32-bit hash equals" {
             .hasher = xxHash32,
         },
         .{
-            .key = &[_]u8{0x9E,0xFF,0x1F,0x4B,0x5E,0x53,0x2F,0xDD,0xB5},
+            .key = &[_]u8{ 0x9E, 0xFF, 0x1F, 0x4B, 0x5E, 0x53, 0x2F, 0xDD, 0xB5 },
             .hash = 3945165279,
             .hasher = xxHash32,
         },
@@ -618,6 +1069,79 @@ test "32-bit hash equals" {
             .key = "abcdefghijklmn",
             .hash = 2676528814,
             .hasher = cityHash32,
+        },
+        .{
+            .key = "",
+            .hash = 3735928559,
+            .hasher = jenkinsLookup3,
+        },
+        .{
+            .key = "",
+            .hash = 1811220761,
+            .hasher = spookyHash32,
+        },
+        .{
+            .key = "foobar",
+            .hash = 65920665,
+            .hasher = spookyHash32,
+        },
+        .{
+            .key = "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTU",
+            .hash = 1804443105,
+            .hasher = spookyHash32,
+        },
+        .{
+            .key = "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQ",
+            .hash = 3453064038,
+            .hasher = spookyHash32,
+        },
+        .{
+            .key = "Hi",
+            .hash = 1178407427,
+            .hasher = spookyHash32,
+        },
+        .{
+            .key = "",
+            .hash = 1811220761,
+            .hasher = spookyHash32,
+        },
+        .{
+            .key = "",
+            .hash = 1811220761,
+            .hasher = spookyHash32,
+        },
+        .{
+            .key = "testinput",
+            .hash = 842918276,
+            .hasher = spookyHash32,
+        },
+        .{
+            .key = "1234567890-abcdefghijklmnopqrstuvwxyz-A",
+            .hash = 2798250829,
+            .hasher = spookyHash32,
+        },
+        .{
+            .key = "Zig-and-Rust-and-Go-Integration-202",
+            .hash = 3371096965,
+            .hasher = spookyHash32,
+        },
+        .{
+            .key = "ABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABAB",
+            .hash = 4047240521,
+            .hasher = spookyHash32,
+        },
+        .{
+            .key = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            .hash = 3433483701,
+            .hasher = spookyHash32,
+        },
+        .{
+            .key = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" ++
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" ++
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" ++
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            .hash = 1669341740,
+            .hasher = spookyHash32,
         },
     };
 

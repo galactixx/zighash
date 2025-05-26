@@ -1,49 +1,34 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
+    // ─────────────────────────────────────────────────────────────
+    // 1. Resolve the effective target once.
+    // ─────────────────────────────────────────────────────────────
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    // ─────────────────────────────────────────────────────────────
+    // 2. Zig source modules
+    // ─────────────────────────────────────────────────────────────
     const lib_mod = b.createModule(.{
-        .root_source_file = b.path("src/zighash.zig"),
+        .root_source_file = b.path("src/lib.zig"),
         .target = target,
         .optimize = optimize,
     });
-
-    const exe_mod = b.createModule(.{
-        .root_source_file = b.path("src/main.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-
-    exe_mod.addImport("zighash_lib", lib_mod);
-    const lib = b.addLibrary(.{
-        .linkage = .static,
-        .name = "zighash",
-        .root_module = lib_mod,
-    });
-
-    b.installArtifact(lib);
-
-    const exe = b.addExecutable(.{
-        .name = "zighash",
-        .root_module = exe_mod,
-    });
-
-    b.installArtifact(exe);
-
-    const run_cmd = b.addRunArtifact(exe);
-    run_cmd.step.dependOn(b.getInstallStep());
-
-    if (b.args) |args| {
-        run_cmd.addArgs(args);
-    }
-
-    const run_step = b.step("run", "Run the app");
-    run_step.dependOn(&run_cmd.step);
 
     // ─────────────────────────────────────────────────────────────
-    // 5. Unit tests
+    // 3. Static library that exposes the Zig API
+    // ─────────────────────────────────────────────────────────────
+    const lib = b.addLibrary(.{
+        .name = "zighash",
+        .linkage = .static,
+        .root_module = lib_mod,
+    });
+    lib.addIncludePath(b.path("include/"));
+    b.installArtifact(lib);
+
+    // ─────────────────────────────────────────────────────────────
+    // 4. Unit tests
     // ─────────────────────────────────────────────────────────────
     const hash_tests = b.addTest(.{
         .root_source_file = b.path("src/zighash.zig"),
