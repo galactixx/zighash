@@ -99,7 +99,7 @@ pub fn fnv1aHash64(key: []const u8) u64
 ### MurmurHash3
 
 ```zig
-pub fn murmur3Hash32(key: []const u8, key: u32) u32
+pub fn murmur3Hash32(key: []const u8, seed: u32) u32
 ```
 
 * **Parameters:**
@@ -114,8 +114,8 @@ pub fn murmur3Hash32(key: []const u8, key: u32) u32
 ### SpookyHash
 
 ```zig
-pub fn spookyHash32(key: []const u8, key: u32) u32
-pub fn spookyHash64(key: []const u8, key: u64) u64
+pub fn spookyHash32(key: []const u8, seed: u32) u32
+pub fn spookyHash64(key: []const u8, seed: u64) u64
 ```
 
 * **Parameters:**
@@ -130,8 +130,8 @@ pub fn spookyHash64(key: []const u8, key: u64) u64
 ### xxHash
 
 ```zig
-pub fn xxHash32(key: []const u8, key: u32) u32
-pub fn xxHash64(key: []const u8, key: u64) u64
+pub fn xxHash32(key: []const u8, seed: u32) u32
+pub fn xxHash64(key: []const u8, seed: u64) u64
 ```
 
 * **Parameters:**
