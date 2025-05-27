@@ -2,7 +2,7 @@
     .name = .zighash,
     .version = "0.1.0",
     .minimum_zig_version = "0.14.0",
-    .fingerprint = 0xc439ab1191759645,
+    .fingerprint = 0x216118708d028dbc,
     .paths = .{
         "build.zig",
         "build.zig.zon",

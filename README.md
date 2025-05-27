@@ -170,10 +170,6 @@ pub fn cityHash64(key: []const u8) u64
 * **Returns:** 32-bit or 64-bit hash optimized for varied input lengths.
 * **Ideal for:** Balancing speed and distribution across small and large inputs.
 
----
-
-* **Description:** Perform bitwise left and right rotations on 32-bit and 64-bit values.
-
 ## 🤝 **License** **License**
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
