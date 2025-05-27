@@ -99,12 +99,13 @@ pub fn fnv1aHash64(key: []const u8) u64
 ### MurmurHash3
 
 ```zig
-pub fn murmur3Hash32(key: []const u8) u32
+pub fn murmur3Hash32(key: []const u8, key: u32) u32
 ```
 
 * **Parameters:**
 
   * `key`: The input byte slice.
+  * `seed`: The 32-bit seed.
 * **Returns:** A 32-bit unsigned integer (`u32`) computed by MurmurHash3.
 * **Ideal for:** General-purpose use with strong avalanche properties.
 
@@ -113,13 +114,14 @@ pub fn murmur3Hash32(key: []const u8) u32
 ### SpookyHash
 
 ```zig
-pub fn spookyHash32(key: []const u8) u32
-pub fn spookyHash64(key: []const u8) u64
+pub fn spookyHash32(key: []const u8, key: u32) u32
+pub fn spookyHash64(key: []const u8, key: u64) u64
 ```
 
 * **Parameters:**
 
   * `key`: The input byte slice.
+  * `seed`: The 32-bit (`u32`) or 64-bit (`u64`) seed.
 * **Returns:** 32-bit (`u32`) or 64-bit (`u64`) hash values.
 * **Ideal for:** High-throughput hashing on long data streams.
 
@@ -128,13 +130,14 @@ pub fn spookyHash64(key: []const u8) u64
 ### xxHash
 
 ```zig
-pub fn xxHash32(key: []const u8) u32
-pub fn xxHash64(key: []const u8) u64
+pub fn xxHash32(key: []const u8, key: u32) u32
+pub fn xxHash64(key: []const u8, key: u64) u64
 ```
 
 * **Parameters:**
 
   * `key`: The input byte slice.
+  * `seed`: The 32-bit (`u32`) or 64-bit (`u64`) seed.
 * **Returns:** 32-bit or 64-bit non-cryptographic hash.
 * **Ideal for:** Extremely fast hashing with minimal CPU overhead.
 

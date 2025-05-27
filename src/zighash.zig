@@ -256,11 +256,10 @@ fn endPartial(
     h0.* = rotl64(h0.*, 54);
 }
 
-fn spookyHash128(key: []const u8) struct { u64, u64 } {
-    const seed: u32 = 0;
+fn spookyHash128(key: []const u8, seed: u64) struct { u64, u64 } {
     if (key.len < 192) {
-        var a: u64 = 0;
-        var b: u64 = 0;
+        var a: u64 = seed;
+        var b: u64 = seed;
         var c: u64 = sc;
         var d: u64 = sc;
 
@@ -349,17 +348,17 @@ fn spookyHash128(key: []const u8) struct { u64, u64 } {
         d +%= sc;
         return shortReturn(a, b, c, d);
     } else {
-        var h0: u64 = @intCast(seed);
-        var h1: u64 = @intCast(seed);
+        var h0: u64 = seed;
+        var h1: u64 = seed;
         var h2: u64 = sc;
-        var h3: u64 = @intCast(seed);
-        var h4: u64 = @intCast(seed);
+        var h3: u64 = seed;
+        var h4: u64 = seed;
         var h5: u64 = sc;
-        var h6: u64 = @intCast(seed);
-        var h7: u64 = @intCast(seed);
+        var h6: u64 = seed;
+        var h7: u64 = seed;
         var h8: u64 = sc;
-        var h9: u64 = @intCast(seed);
-        var h10: u64 = @intCast(seed);
+        var h9: u64 = seed;
+        var h10: u64 = seed;
         var h11: u64 = sc;
 
         var bytesLeft: usize = key.len;
@@ -465,21 +464,21 @@ fn spookyHash128(key: []const u8) struct { u64, u64 } {
     }
 }
 
-pub fn spookyHash64(key: []const u8) u64 {
-    const hash1, _ = spookyHash128(key);
+pub fn spookyHash64(key: []const u8, seed: u64) u64 {
+    const hash1, _ = spookyHash128(key, seed);
     return @truncate(hash1);
 }
 
-pub fn spookyHash32(key: []const u8) u32 {
-    const hash1, _ = spookyHash128(key);
+pub fn spookyHash32(key: []const u8, seed: u32) u32 {
+    const hash1, _ = spookyHash128(key, @intCast(seed));
     return @truncate(hash1);
 }
 
 const murc1: u32 = 0xCC9E2D51;
 const murc2: u32 = 0x1B873593;
 
-pub fn murmur3Hash32(key: []const u8) u32 {
-    var h: u32 = 0;
+pub fn murmur3Hash32(key: []const u8, seed: u32) u32 {
+    var h: u32 = seed;
     var bytesLeft: usize = key.len;
     var i: usize = 0;
     while (bytesLeft >= 4) : (bytesLeft -= 4) {
@@ -543,9 +542,8 @@ fn xxPass32Bytes(acc: u32, bytes: []const u8) u32 {
     return xxPass32(acc, k);
 }
 
-pub fn xxHash64(key: []const u8) u64 {
+pub fn xxHash64(key: []const u8, seed: u64) u64 {
     var h: u64 = 0;
-    const seed: u64 = 0;
     var bytesLeft = key.len;
 
     if (key.len >= 32) {
@@ -623,9 +621,8 @@ const xx32p3: u32 = 3266489917;
 const xx32p4: u32 = 668265263;
 const xx32p5: u32 = 374761393;
 
-pub fn xxHash32(key: []const u8) u32 {
+pub fn xxHash32(key: []const u8, seed: u32) u32 {
     var h: u32 = 0;
-    const seed: u32 = 0;
     var bytesLeft = key.len;
 
     if (key.len >= 16) {
@@ -977,37 +974,12 @@ pub fn cityHash64(key: []const u8) u64 {
     }
 }
 
-test "32-bit hash equals" {
+test "32-bit hash equals seeded" {
     const tests = [_]struct {
         key: []const u8,
         hash: u32,
-        hasher: *const fn (key: []const u8) u32,
+        hasher: *const fn (key: []const u8, seed: u32) u32,
     }{
-        .{
-            .key = "",
-            .hash = 2166136261,
-            .hasher = fnv1aHash32,
-        },
-        .{
-            .key = "Spam",
-            .hash = 2829595432,
-            .hasher = fnv1aHash32,
-        },
-        .{
-            .key = "FNV1a32",
-            .hash = 1071197150,
-            .hasher = fnv1aHash32,
-        },
-        .{
-            .key = "abcdefghijklmnopqrstuvwxyz0123456789",
-            .hash = 1981843661,
-            .hasher = fnv1aHash32,
-        },
-        .{
-            .key = &[_]u8{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 },
-            .hash = 797261938,
-            .hasher = fnv1aHash32,
-        },
         .{
             .key = "",
             .hash = 0,
@@ -1037,41 +1009,6 @@ test "32-bit hash equals" {
             .key = "0123456789ABCDEFGHIJKLMNOPQRefghijklmnopqrstuvwxyzs",
             .hash = 315866898,
             .hasher = xxHash32,
-        },
-        .{
-            .key = "",
-            .hash = 3696677242,
-            .hasher = cityHash32,
-        },
-        .{
-            .key = "hey",
-            .hash = 2574615888,
-            .hasher = cityHash32,
-        },
-        .{
-            .key = "test1234",
-            .hash = 2145463298,
-            .hasher = cityHash32,
-        },
-        .{
-            .key = "abcdefghijklmnopqr",
-            .hash = 3255561686,
-            .hasher = cityHash32,
-        },
-        .{
-            .key = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-            .hash = 3094213589,
-            .hasher = cityHash32,
-        },
-        .{
-            .key = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-            .hash = 3701358904,
-            .hasher = cityHash32,
-        },
-        .{
-            .key = "abcdefghijklmn",
-            .hash = 2676528814,
-            .hasher = cityHash32,
         },
         .{
             .key = "",
@@ -1139,6 +1076,80 @@ test "32-bit hash equals" {
             .hash = 2577041638,
             .hasher = spookyHash32,
         },
+    };
+
+    for (tests) |hashTest| {
+        const hash: u32 = hashTest.hasher(hashTest.key, 0);
+        try std.testing.expectEqual(hashTest.hash, hash);
+    }
+}
+
+test "32-bit hash equals" {
+    const tests = [_]struct {
+        key: []const u8,
+        hash: u32,
+        hasher: *const fn (key: []const u8) u32,
+    }{
+        .{
+            .key = "",
+            .hash = 2166136261,
+            .hasher = fnv1aHash32,
+        },
+        .{
+            .key = "Spam",
+            .hash = 2829595432,
+            .hasher = fnv1aHash32,
+        },
+        .{
+            .key = "FNV1a32",
+            .hash = 1071197150,
+            .hasher = fnv1aHash32,
+        },
+        .{
+            .key = "abcdefghijklmnopqrstuvwxyz0123456789",
+            .hash = 1981843661,
+            .hasher = fnv1aHash32,
+        },
+        .{
+            .key = &[_]u8{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 },
+            .hash = 797261938,
+            .hasher = fnv1aHash32,
+        },
+        .{
+            .key = "",
+            .hash = 3696677242,
+            .hasher = cityHash32,
+        },
+        .{
+            .key = "hey",
+            .hash = 2574615888,
+            .hasher = cityHash32,
+        },
+        .{
+            .key = "test1234",
+            .hash = 2145463298,
+            .hasher = cityHash32,
+        },
+        .{
+            .key = "abcdefghijklmnopqr",
+            .hash = 3255561686,
+            .hasher = cityHash32,
+        },
+        .{
+            .key = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            .hash = 3094213589,
+            .hasher = cityHash32,
+        },
+        .{
+            .key = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+            .hash = 3701358904,
+            .hasher = cityHash32,
+        },
+        .{
+            .key = "abcdefghijklmn",
+            .hash = 2676528814,
+            .hasher = cityHash32,
+        },
         .{
             .key = "The quick brown fox jumps over the lazy dog",
             .hash = 96435427,
@@ -1167,37 +1178,12 @@ test "32-bit hash equals" {
     }
 }
 
-test "64-bit hash equals" {
+test "64-bit hash equals seeded" {
     const tests = [_]struct {
         key: []const u8,
         hash: u64,
-        hasher: *const fn (key: []const u8) u64,
+        hasher: *const fn (key: []const u8, key: u64) u64,
     }{
-        .{
-            .key = "",
-            .hash = 14695981039346656037,
-            .hasher = fnv1aHash64,
-        },
-        .{
-            .key = "a",
-            .hash = 12638187200555641996,
-            .hasher = fnv1aHash64,
-        },
-        .{
-            .key = "FNV1a64",
-            .hash = 11445829140922082009,
-            .hasher = fnv1aHash64,
-        },
-        .{
-            .key = "The quick brown fox jumps over the lazy dog",
-            .hash = 17580284887202820368,
-            .hasher = fnv1aHash64,
-        },
-        .{
-            .key = &[_]u8{ 0x00, 0xFF, 0x10, 0x20, 0x30 },
-            .hash = 1421577967308416032,
-            .hasher = fnv1aHash64,
-        },
         .{
             .key = "",
             .hash = 17241709254077376921,
@@ -1212,52 +1198,6 @@ test "64-bit hash equals" {
             .key = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
             .hash = 17321129452528567775,
             .hasher = xxHash64,
-        },
-        .{
-            .key = "",
-            .hash = 11160318154034397263,
-            .hasher = cityHash64,
-        },
-        .{
-            .key = "a93jAbkjj",
-            .hash = 16340543126167916629,
-            .hasher = cityHash64,
-        },
-        .{
-            .key = "\xff\xee\xdd\xcc",
-            .hash = 2883375492416478063,
-            .hasher = cityHash64,
-        },
-        .{
-            .key = "Z",
-            .hash = 8225556516526081882,
-            .hasher = cityHash64,
-        },
-        .{
-            .key = "test123",
-            .hash = 13994010460782417955,
-            .hasher = cityHash64,
-        },
-        .{
-            .key = "hashtest123456",
-            .hash = 2477590231392381530,
-            .hasher = cityHash64,
-        },
-        .{
-            .key = "abcdefghijklmnopqrstuvwxy",
-            .hash = 7043737513482161259,
-            .hasher = cityHash64,
-        },
-        .{
-            .key = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-            .hash = 11215168623319647236,
-            .hasher = cityHash64,
-        },
-        .{
-            .key = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" ++
-                "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
-            .hash = 6070899839546784176,
-            .hasher = cityHash64,
         },
         .{
             .key = "",
@@ -1322,6 +1262,91 @@ test "64-bit hash equals" {
                 "YYYYYYYYYYYYYYYYYYYZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ",
             .hash = 6224377824603928185,
             .hasher = spookyHash64,
+        },
+    };
+
+    for (tests) |hashTest| {
+        const hash: u64 = hashTest.hasher(hashTest.key, 0);
+        try std.testing.expectEqual(hashTest.hash, hash);
+    }
+}
+
+test "64-bit hash equals" {
+    const tests = [_]struct {
+        key: []const u8,
+        hash: u64,
+        hasher: *const fn (key: []const u8) u64,
+    }{
+        .{
+            .key = "",
+            .hash = 14695981039346656037,
+            .hasher = fnv1aHash64,
+        },
+        .{
+            .key = "a",
+            .hash = 12638187200555641996,
+            .hasher = fnv1aHash64,
+        },
+        .{
+            .key = "FNV1a64",
+            .hash = 11445829140922082009,
+            .hasher = fnv1aHash64,
+        },
+        .{
+            .key = "The quick brown fox jumps over the lazy dog",
+            .hash = 17580284887202820368,
+            .hasher = fnv1aHash64,
+        },
+        .{
+            .key = &[_]u8{ 0x00, 0xFF, 0x10, 0x20, 0x30 },
+            .hash = 1421577967308416032,
+            .hasher = fnv1aHash64,
+        },
+        .{
+            .key = "",
+            .hash = 11160318154034397263,
+            .hasher = cityHash64,
+        },
+        .{
+            .key = "a93jAbkjj",
+            .hash = 16340543126167916629,
+            .hasher = cityHash64,
+        },
+        .{
+            .key = "\xff\xee\xdd\xcc",
+            .hash = 2883375492416478063,
+            .hasher = cityHash64,
+        },
+        .{
+            .key = "Z",
+            .hash = 8225556516526081882,
+            .hasher = cityHash64,
+        },
+        .{
+            .key = "test123",
+            .hash = 13994010460782417955,
+            .hasher = cityHash64,
+        },
+        .{
+            .key = "hashtest123456",
+            .hash = 2477590231392381530,
+            .hasher = cityHash64,
+        },
+        .{
+            .key = "abcdefghijklmnopqrstuvwxy",
+            .hash = 7043737513482161259,
+            .hasher = cityHash64,
+        },
+        .{
+            .key = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            .hash = 11215168623319647236,
+            .hasher = cityHash64,
+        },
+        .{
+            .key = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" ++
+                "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+            .hash = 6070899839546784176,
+            .hasher = cityHash64,
         },
     };
 
