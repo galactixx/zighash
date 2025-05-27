@@ -82,7 +82,6 @@ pub fn fnv1aHash32(key: []const u8) u32
 
   * `key`: The input byte slice (`[]const u8`) to hash.
 * **Returns:** A 32-bit unsigned integer (`u32`) representing the FNV-1a hash.
-* **Ideal for:** Hash tables, checksums, and simple fingerprinting.
 
 ```zig
 pub fn fnv1aHash64(key: []const u8) u64
@@ -92,7 +91,6 @@ pub fn fnv1aHash64(key: []const u8) u64
 
   * `key`: The input byte slice.
 * **Returns:** A 64-bit unsigned integer (`u64`) representing the FNV-1a hash.
-* **Ideal for:** Larger hash spaces with minimal dependencies.
 
 ---
 
@@ -107,7 +105,6 @@ pub fn murmur3Hash32(key: []const u8, seed: u32) u32
   * `key`: The input byte slice.
   * `seed`: The 32-bit seed.
 * **Returns:** A 32-bit unsigned integer (`u32`) computed by MurmurHash3.
-* **Ideal for:** General-purpose use with strong avalanche properties.
 
 ---
 
@@ -123,7 +120,6 @@ pub fn spookyHash64(key: []const u8, seed: u64) u64
   * `key`: The input byte slice.
   * `seed`: The 32-bit (`u32`) or 64-bit (`u64`) seed.
 * **Returns:** 32-bit (`u32`) or 64-bit (`u64`) hash values.
-* **Ideal for:** High-throughput hashing on long data streams.
 
 ---
 
@@ -139,7 +135,6 @@ pub fn xxHash64(key: []const u8, seed: u64) u64
   * `key`: The input byte slice.
   * `seed`: The 32-bit (`u32`) or 64-bit (`u64`) seed.
 * **Returns:** 32-bit or 64-bit non-cryptographic hash.
-* **Ideal for:** Extremely fast hashing with minimal CPU overhead.
 
 ---
 
@@ -153,7 +148,6 @@ pub fn superFastHash32(key: []const u8) u32
 
   * `key`: The input byte slice.
 * **Returns:** A 32-bit non-cryptographic hash.
-* **Ideal for:** Fast, non-cryptographic hashing of variable-length data.
 
 ---
 
@@ -168,7 +162,6 @@ pub fn cityHash64(key: []const u8) u64
 
   * `key`: The input byte slice.
 * **Returns:** 32-bit or 64-bit hash optimized for varied input lengths.
-* **Ideal for:** Balancing speed and distribution across small and large inputs.
 
 ## 🤝 **License** **License**
 
