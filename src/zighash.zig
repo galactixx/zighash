@@ -1044,6 +1044,26 @@ test "32-bit hash equals" {
             .hasher = cityHash32,
         },
         .{
+            .key = "hey",
+            .hash = 2574615888,
+            .hasher = cityHash32,
+        },
+        .{
+            .key = "test1234",
+            .hash = 2145463298,
+            .hasher = cityHash32,
+        },
+        .{
+            .key = "abcdefghijklmnopqr",
+            .hash = 3255561686,
+            .hasher = cityHash32,
+        },
+        .{
+            .key = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            .hash = 3094213589,
+            .hasher = cityHash32,
+        },
+        .{
             .key = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
             .hash = 3701358904,
             .hasher = cityHash32,
@@ -1206,6 +1226,37 @@ test "64-bit hash equals" {
         .{
             .key = "\xff\xee\xdd\xcc",
             .hash = 2883375492416478063,
+            .hasher = cityHash64,
+        },
+        .{
+            .key = "Z",
+            .hash = 8225556516526081882,
+            .hasher = cityHash64,
+        },
+        .{
+            .key = "test123",
+            .hash = 13994010460782417955,
+            .hasher = cityHash64,
+        },
+        .{
+            .key = "hashtest123456",
+            .hash = 2477590231392381530,
+            .hasher = cityHash64,
+        },
+        .{
+            .key = "abcdefghijklmnopqrstuvwxy",
+            .hash = 7043737513482161259,
+            .hasher = cityHash64,
+        },
+        .{
+            .key = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            .hash = 11215168623319647236,
+            .hasher = cityHash64,
+        },
+        .{
+            .key = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" ++
+                "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+            .hash = 6070899839546784176,
             .hasher = cityHash64,
         },
         .{
