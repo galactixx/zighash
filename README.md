@@ -38,7 +38,7 @@ const zighash_mod = b.dependency("zighash", .{
 }).module("zighash");
 
 // add to library
-lib.addImport("zighash", zighash_mod);
+lib_mod.addImport("zighash", zighash_mod);
 
 // add to executable
 exe.root_module.addImport("zighash", zighash_mod);
