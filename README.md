@@ -19,40 +19,32 @@ Zighash is a zero-dependency Zig package for generating fast, non-cryptographic 
 
 ## 🚀 Getting Started
 
-### 1. Fetch via `zig fetch`
+### Fetch via `zig fetch`
+
+You can use the built‑in Zig fetcher to download and pin a tarball:
 
 ```bash
-zig fetch --save=zighash \
-  https://github.com/galactixx/zighash/archive/v0.1.0.tar.gz
+zig fetch --save git+https://github.com/galactixx/zighash#v0.2.0
 ```
 
-In your `build.zig`:
+> This adds an `zighash` entry under `.dependencies` in your `build.zig.zon`. 
+
+Then in your build.zig:
 
 ```zig
-const pkg = b.dependency("zighash", .{});
-const zh  = pkg.module("zighash");
-lib.addPackagePath("zighash", zh.src_path);
+const zighash_mod = b.dependency("zighash", .{
+    .target = target,
+    .optimize = optimize,
+}).module("zighash");
+
+// add to library
+lib.addImport("zighash", zighash_mod);
+
+// add to executable
+exe.root_module.addImport("zighash", zighash_mod);
 ```
 
----
-
-### 2. Manual
-
-```bash
-git clone https://github.com/galactixx/zighash.git
-```
-
-In your `build.zig`:
-
-```zig
-lib.addPackagePath("zighash", "../zighash/src");
-```
-
-Then import in your code:
-
-```zig
-const zh = @import("zighash");
-```
+This lets you `const zh = @import("zighash");` in your Zig code.
 
 ## 📚 **Usage**
 
