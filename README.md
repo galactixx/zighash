@@ -155,7 +155,7 @@ pub fn cityHash64(key: []const u8) u64
   * `key`: The input byte slice.
 * **Returns:** 32-bit or 64-bit hash optimized for varied input lengths.
 
-## 🤝 **License** **License**
+## 🤝 **License**
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
