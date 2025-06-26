@@ -2,7 +2,7 @@
   <img src="/docs/logo.png" alt="zighash logo" width="75%"/>
 </p>
 
-Zighash is a zero-dependency Zig package for generating fast, non-cryptographic hash values using a variety of popular algorithms: **FNV-1a**, **MurmurHash3**, **SpookyHash**, **xxHash**, **SuperFastHash**, and **CityHash**. Perfect for hash-based data structures, checksums, deduplication, and performance-sensitive applications.
+Zighash is a zero-dependency Zig package for generating non-cryptographic hash values using a variety of popular algorithms: **FNV-1a**, **MurmurHash3**, **SpookyHash**, **xxHash**, **SuperFastHash**, and **CityHash**.
 
 ## ✨ **Features**
 
@@ -14,8 +14,6 @@ Zighash is a zero-dependency Zig package for generating fast, non-cryptographic 
   * **SpookyHash:** `spookyHash32`, `spookyHash64`
   * **xxHash:** `xxHash32`, `xxHash64`
   * **CityHash:** `cityHash32`, `cityHash64`
-* **Pure Zig Implementation:** Zero dependencies, works at runtime and at comptime.
-* **Comprehensive Testing:** Built-in `std.testing` suite ensures correctness.
 
 ## 🚀 Getting Started
 
